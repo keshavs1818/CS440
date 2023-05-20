@@ -1,0 +1,299 @@
+import math
+from collections import deque as queue
+from random import uniform
+import time
+# unblocked = True
+# blocked = false
+
+# fire = true
+# not fire = false
+
+q = 0.1 # Flammability of the maze changes everytime testing
+
+# Returns True, current point, prev
+def bfs(initial_state, goal_state, env, fire_maze):
+    fringe = queue()  # used a deque fringe stores the children to visit
+    fringe.append(initial_state)
+    closed_set = set()  # keeps tracked of visited cells
+    closed_set.add(initial_state)
+    prev = {initial_state: None}  # Dictionary stores child:parent
+    directions = [[0, 1], [0, -1], [1, 0], [-1, 0]]
+    while len(fringe) != 0:  # while there are cells to visit
+        current_state = fringe.popleft()  # pop the first element in the queue
+        closed_set.add(current_state)  # add current_state to visited
+
+        # if the current cell is the goal return
+        if current_state == goal_state:
+            return [True, current_state, prev]
+
+        # visit all the children of a cell
+        for d in directions:
+            nr = current_state[0] + d[0]
+            nc = current_state[1] + d[1]
+            # checking if the cell is valid
+            if nr < 0 or nr >= len(env) or nc < 0 or nc >= len(env):
+                continue
+            # checks if the cell is unblocked and not on fire and has not been visited already we add it to the fringe
+            if env[nr][nc] and not fire_maze and ((nr, nc) not in closed_set):
+                fringe.append((nr, nc))
+                prev[(nr, nc)] = current_state
+    # if we cannot reach the goal then return the following
+    return [False, None, None]
+
+# returns True current_cell, prev1, prev2
+def bidirectionalBfs(initial_state, goal_state, env, fire_maze):
+    # fringe, closed_set and prev work in the same manner as bfs we alternate between searching from the start and
+    # searching from the end until we find a common cell
+    fringe1 = queue()
+    fringe2 = queue()
+    fringe1.append(initial_state)
+    fringe2.append(goal_state)
+    closed_set1 = set()
+    closed_set1.add(initial_state)
+    closed_set2 = set()
+    closed_set2.add(goal_state)
+    prev1 = {initial_state: None}
+    prev2 = {goal_state: None}
+    directions = [[0, 1], [0, -1], [1, 0], [-1, 0]]
+    alt = 0  # to keep track of the alternating
+    # while we have cells to explore (if either of the fringe is empty the path does not exist)
+    while len(fringe1) != 0 and len(fringe2) != 0:
+        # bfs from start
+        if alt == 0:
+            curr1 = fringe1.popleft()
+            closed_set1.add(curr1)
+            print(closed_set1)
+            if curr1 in closed_set2:
+                return True, curr1, prev1, prev2
+            for d in directions:
+                nr = curr1[0] + d[0]
+                nc = curr1[1] + d[1]
+                if nr < 0 or nr >= len(env) or nc < 0 or nc >= len(env):
+                    continue
+                if env[nr][nc] and not fire_maze[nr][nc] and ((nr, nc) not in closed_set1):
+                    fringe1.append((nr, nc))
+                    prev1[(nr, nc)] = curr1
+            alt = 1
+        # bfs from goal
+        else:
+            curr2 = fringe2.popleft()
+            closed_set2.add(curr2)
+            if curr2 in closed_set1:
+                return True, curr2, prev1, prev2
+            for d in directions:
+                nr = curr2[0] + d[0]
+                nc = curr2[1] + d[1]
+                if nr < 0 or nr >= len(env) or nc < 0 or nc >= len(env):
+                    continue
+                if env[nr][nc] and not fire_maze[nr][nc] and ((nr, nc) not in closed_set2):
+                    fringe2.append((nr, nc))
+                    prev2[(nr, nc)] = curr2
+            alt = 0
+    # if path does not exist return the following
+    return False, None, None, None
+
+def maze():
+    # Initializing a 51 by 51 maze matrix.
+    maze_f = [[0] * 51] * 51
+    for i in range(0, 51):
+        for j in range(0, 51):
+            # If a random number is between 0 and 0.7, it is unblocked, true, and good. Else, if it is more than 0.7 and less than 1, it is blocked, false, and bad.
+            maze_f[i][j] = uniform(0, 1) < 0.7
+    ## We are now in the process of unblocking all four corners to do the BFS operation from each corner to center.
+
+    # Top left unblocked.
+    maze_f[0][0] = True
+
+    # Top right unblocked.
+    maze_f[0][50] = True
+
+    # Bottom left unblocked.
+    maze_f[50][0] = True
+
+    # Bottom right unblocked.
+    maze_f[50][50] = True
+
+    # Center unblocked.
+    maze_f[25][25] = True
+
+    # If there is a BFS from top right to center,
+    if bidirectionalBfs((0, 0), (25, 25), maze_f, maze_f)[0]:
+        # If there is a BFS from bottom right to center,
+        if bidirectionalBfs((50, 50), (25, 25), maze_f, maze_f)[0]:
+            # If there is a BFS from top right to center,
+            if bidirectionalBfs((0, 50), (25, 25), maze_f, maze_f)[0]:
+                # If there is a BFS from bottom left to center,
+                if bidirectionalBfs((50, 0), (25, 25), maze_f, maze_f)[0]:
+                    # Center is blocked
+                    maze_f[25][25] = False
+                    # If a BFS exists from the top left to bottom right given that the center is blocked,
+                    if bidirectionalBfs((0, 0), (50, 50), maze_f, maze_f):
+                        bidirectionalBfs((0, 0), (50, 50), maze_f, maze_f)
+                        # return the maze
+                        return maze_f
+    # return nothing
+    return None
+
+
+def dfs(start1, start2, finish1, finish2, maze, fire):
+    start = (start1, start2)
+    visited = []
+    if start == (finish1, finish2):
+        return True
+    else:
+        if start not in visited:
+            visited.append(start)
+            directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
+            for d in directions:
+                nr = start[0] + d[0]
+                nc = start[1] + d[1]
+                limits = (0 <= nr < 51) and (0 <= nc < 51)
+                if limits and maze[nr][nc] and not fire[nr][nc]:
+                    dfs(nr, nc, finish1, finish2, maze, fire)
+    return False
+
+# initializing a 51 by 51 fire matrix. Set everything to false
+def initFire():
+    fire2 = [[0] * 51] * 51
+    for i in range(0, 51):
+        for j in range(0, 51):
+            fire2[i][j] = False
+    return fire2
+
+# Advancing fire
+def advanceFire(maze, fire):
+    # Initializing fire
+    fire2 = initFire()
+    print(fire)
+    for i in range(0, 51):
+        for j in range(0, 51):
+            # if the maze cell is unblocked and cell is not on fire
+            if maze[i][j] and not fire[i][j]:
+                directions = [[0, -1], [0, 1], [-1, 0], [1, 0]]
+                k = 0
+                # Look through children
+                for d in directions:
+                    nr = i + d[0]
+                    nc = j + d[1]
+                    limit = (0 <= nr < 51) and (0 <= nc < 51)
+                    # if children are unblocked and on fire and they are within cell limits, the k number is incremented
+                    if limit and maze[nr][nc] and fire[nr][nc]:
+                        k += 1
+                # places fire probability in a fire cell
+                fire2[i][j] = 1 - pow(1 - q, k) > uniform(0, 1)
+    return fire2
+
+# appends and returns the BFS path generated
+def pathBfs(path, x, y):
+    if path is None:
+        return None
+    row = 50
+    column = 50
+    p = queue()
+    p.append((row, column))
+    while row != x or column != y:
+        (row, column) = path[(row, column)]
+        p.appendleft((row, column))
+    return p
+
+# Agent 1: Just plans the path once and does breadth first search
+def agent_1(maze, fire):
+    x = 0
+    y = 0
+    # Path is done
+    p = bfs((0, 0), (50, 50), maze, fire)
+    if p is None:
+        return False
+    plan = pathBfs(p[2], 0, 0)
+    if plan is None:
+        return False
+    # Traverse through path
+    for i in range(0, len(plan)):
+        x = plan[i][0]
+        y = plan[i][1]
+        # If path element is goal, we're good.
+        if x == 50 and y == 50:
+            return True
+        # If indices at fire contain a fire, it's bad.
+        if fire[x][y]:
+            return False
+        # Move on to next path element
+        (x, y) = plan.pop(0)
+        # Advance the fire
+        advanceFire(maze, fire)
+    return False
+
+# Agent 2: Keeps recalculating the path based on the situation
+def agent_2(maze, fire):
+    x = 0
+    y = 0
+    while True:
+        # Path element is goal.
+        if x == 50 and y == 50:
+            return True
+        # Path element is fire, return false;
+        if fire[x][y]:
+            return False
+
+        plan = bfs((x, y), (50, 50), maze, fire)
+        path = pathBfs(p[2], x, y)
+        if path is None:
+            return False
+        path.popleft()
+        (x, y) = path.popleft()
+        advanceFire(maze, fire)
+        found = False
+        for p in plan:
+            if fire[p[0]][p[1]]:
+                found = True
+        if found:
+            return False
+    return False
+
+# Agent 3: Does a simulation and advances fire three steps at a time
+def agent_3(maze, fire):
+    x = 0
+    y = 0
+    # One simulation up
+    fire1 = advanceFire(maze, fire)
+    # Two simulations up
+    fire2 = advanceFire(maze, fire1)
+    # Three simulations up
+    fire3 = advanceFire(maze, fire2)
+    while True:
+        # When goal is reached, we return true
+        if x == 50 and y == 50:
+            return True
+        # Look through the map
+        p = bfs((x, y), (50, 50), fire3)
+        # Going inward one simulation
+        if p[2] is None:
+            p = bfs((x, y), (50, 50), fire2)
+        # Going inward another simulation
+        if p[2] is None:
+            p = bfs((x, y), (50, 50), fire1)
+        # Going inward a third simulation
+        if p[2] is None:
+            p = bfs((x, y), (50, 50), fire)
+        # No path, return false
+        if p[2] is None:
+            return False
+        path = pathBfs(p[2], x, y)
+        path.popleft()
+        (x, y) = path.popleft()
+        # Advance Fire
+        advanceFire(maze, fire)
+    return False
+
+
+fire = initFire()
+fire[25][25] = True
+maze = maze()
+print(maze)
+# advanceFire(maze, fire)
+# print(fire)
+print(bfs((0, 0), (50, 50), maze, fire))
+# print(agent_1(maze, fire))
+# print(agent_2(maze, fire))
+# print(agent_3(maze, fire))
+# print(agent_4(maze, fire))
