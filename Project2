@@ -1,0 +1,628 @@
+# Shahpur Khan, Keshav Subramaniyam
+import random
+from collections import deque as queue
+def agent0_3(target_position, agent_position, adj_list):
+    count = 0
+    # target position keeps moving randomly until it reaches the agent position
+    while target_position != agent_position:
+        # Find a random neighbor for target to jump to
+        rand = random.randint(0, len(adj_list[target_position]) - 1)
+        listadj = list(adj_list[target_position])
+
+        # Jumped. Incremented.
+        target_position = listadj[rand]
+        count += 1
+    return count
+# def bfs(visited, graph, startNode, endNode):
+#     visited.append(startNode)
+#     queue = [startNode]
+#     while queue:
+#         p = queue.pop(0)
+#         for neighbor in graph[p]:
+#             if neighbor not in visited:
+#                 visited.append(neighbor)
+#                 queue.append(neighbor)
+#                 if neighbor == endNode:
+#                     return visited
+def bfs(visited, graph, startNode, endNode, prev):
+    # A queue initially has the start node. Visited is plain and the hash table prev has nothing
+    queue = [startNode]
+    # While
+    while queue:
+        # import pdb
+        # pdb.set_trace()
+        curr = queue.pop(0)
+        visited.add(curr)
+        if curr == endNode:
+            return prev
+        for neighbors in graph[curr]:
+            if neighbors not in visited:
+                queue.append(neighbors)
+                visited.add(neighbors)
+                prev[neighbors] = curr
+    return None
+def generatepath(prev, startnode, endnode):
+    # Path starts with endnode
+    pathlist = [endnode]
+    while endnode != startnode:
+        # continuously keeps appending backwards until start
+        pathlist.append(prev[endnode])
+        endnode = prev[endnode]
+    return pathlist
+
+def agent1(target_position, agent_position, adj_list):
+    count = 0
+    print(adj_list)
+    # Until target position reaches the agent position and it gets caught
+    while agent_position != target_position:
+        # create a list of all of the agent's neighbors
+        listadj = list(adj_list[agent_position])
+        # create a list of all of the distances from EACH of the neighbor to the target
+        bfslens = []
+        # Traverse through neighbors
+        visited = set()
+        prev2 = {agent_position: None}
+        bfsagent = bfs(visited, adj_list, agent_position, target_position, prev2)
+        path2 = generatepath(bfsagent, agent_position, target_position)
+        for lists in listadj:
+            # create a new visited array
+            visited = set()
+            # call the bfs algorithm
+            prev = {lists: None}
+            bfslistend = bfs(visited, adj_list, lists, target_position, prev)
+            # Generate the path from the hash table returned from bfslistend
+            path = generatepath(bfslistend, lists, target_position)
+            # Append (path length - 1) to bfs
+            if len(path) < len(path2):
+                bfslens.append(len(path))
+        rand2 = random.randint(0, len(bfslens) - 1)
+        # Update agent_position to that index neighbor
+        agent_position = bfslens[rand2]
+        # Finding a random neighbor for target to jump to
+        if agent_position == target_position:
+            break
+        rand = random.randint(0, len(adj_list[target_position]) - 1)
+        listadj = list(adj_list[target_position])
+        # Target jumps to neighbor
+        target_position = listadj[rand]
+        # Agent has moved to hopefully get closer to target. Target has moved too. One step made. Count incremented.
+        count += 1
+    return count
+
+
+def agent2(target_position, agent_position, adj_list):
+    ## Initialize # of steps taken so far.
+    stepsTaken = 0
+
+    ## While agent hasn't won yet:
+    while agent_position != target_position:
+
+        ## Get all the neighbors agent currently has.
+        currNeighbors = adj_list[agent_position]
+
+        bfslens = []
+        ## And for each of those current neighbors:
+        for neighbor in currNeighbors:
+            visited = set()
+            # call the bfs algorithm
+            prev = {neighbor: None}
+            ## Compute the shortest # of steps between the neighbor and the target.
+            bfslistend2 = bfs(visited, adj_list, neighbor, target_position, prev)
+            path = generatepath(bfslistend2, neighbor, target_position)
+            bfslens.append(len(path))
+
+        ## Take the minimum of all these.
+        index = 0
+        for i in range(0, len(bfslens)):
+            if bfslens[i] == min(bfslens):
+                index = i
+                break
+        ## Travel to that neighbor.
+        listcurrneighbors = list(currNeighbors)
+        agent_position = listcurrneighbors[index]
+        ## Update agent_position.
+
+        ## Increment stepsTaken by 1.
+        stepsTaken += 1
+
+        ## If the agent is now at the target:
+        if agent_position == target_position:
+            break
+        ## If not:
+        else:
+            ## Get all the neighbors target currently has.
+            currNeighborsTarget = adj_list[target_position]
+            ## Move target to a random neighbor.
+            rand = random.randint(0, len(currNeighborsTarget) - 1)
+            listcurrneighborstarget = list(currNeighborsTarget)
+            target_position = listcurrneighborstarget[rand]
+    return stepsTaken  ## for data analysis (feel free to add more things to return)
+steps = 0
+def findsum(probarr, i):
+    sum = 0
+    for j in range(0, len(probarr)):
+        # If index is not the index the agent is at, sum it up. Else do not.
+        if j != i:
+            sum += probarr[j]
+    return sum
+def findneighbors(adj_list, i, j):
+    listadj = list(adj_list[j + 1])
+    # i
+    if i not in listadj:
+        return 0
+    else:
+        return 1 / len(listadj)
+def agent_4(target_position, agent_position, adj_list):
+    probarr = [1/40 for i in range (40)]
+    steps = 0
+    while agent_position != target_position:
+        probarr[agent_position - 1] = 0
+        sum = findsum(probarr, agent_position - 1)
+        # Changes probability
+        newprobarr = [0]*40
+        for i in range(0, len(probarr)):
+            if i != agent_position - 1:
+                newprobarr[i] = probarr[i] / sum
+        for i in range(0, len(newprobarr)):
+            probarr[i] = newprobarr[i]
+
+        # Target moves
+        listadj = list(adj_list[target_position])
+        rand1 = random.randint(0, len(listadj) - 1)
+        target_position = listadj[rand1]
+
+        # If agent at target, you break
+
+        if agent_position == target_position:
+            break
+
+        # Recalculate probabilities
+        newprobarr2 = [0]*40
+        for x2 in range(0, len(probarr)):
+            sum = 0
+            for x1 in range(0, len(probarr)):
+                if x1 != x2 or x1 != agent_position - 1:
+                    sum += probarr[x1] * findneighbors(adj_list, x2, x1)
+            newprobarr[x2] = sum
+        for i in range(0, len(newprobarr)):
+            probarr[i] = newprobarr[i]
+
+        # Highest probability
+        maxindices = []
+        for i in range(0, len(probarr)):
+           if probarr[i] == max(probarr):
+               maxindices.append(i)
+        if len(maxindices) > 1:
+            rand2 = random.randint(0, len(maxindices) - 1)
+            agent_position = maxindices[rand2] + 1
+        elif len(maxindices) == 1:
+            agent_position = maxindices[0] + 1
+
+        # Steps increment
+        steps += 1
+    return steps
+
+
+def agent_5(target_position, agent_position, adj_list):
+    probarr = [1 / 40 for i in range(40)]
+    turn = 1
+    steps = 0
+    while agent_position != target_position:
+        probarr[agent_position - 1] = 0
+        sum = findsum(probarr, agent_position - 1)
+        # Changes probability
+        newprobarr = [0] * 40
+        for i in range(0, len(probarr)):
+            if i != agent_position - 1:
+                newprobarr[i] = probarr[i] / sum
+        for i in range(0, len(newprobarr)):
+            probarr[i] = newprobarr[i]
+
+        # Target moves
+        listadj = list(adj_list[target_position])
+        rand1 = random.randint(0, len(listadj) - 1)
+        target_position = listadj[rand1]
+
+        # If agent at target, you break
+
+        if agent_position == target_position:
+            break
+
+        # Recalculate probabilities
+        newprobarr2 = [0] * 40
+        for x2 in range(0, len(probarr)):
+            sum = 0
+            for x1 in range(0, len(probarr)):
+                if x1 != x2 or x1 != agent_position - 1:
+                    sum += probarr[x1] * findneighbors(adj_list, x2, x1)
+            newprobarr[x2] = sum
+        for i in range(0, len(newprobarr)):
+            probarr[i] = newprobarr[i]
+
+        # Highest probability
+        maxindices = []
+        if turn == 3:
+            turn = 1
+
+        if turn == 2:
+            randlist = []
+            maxprob = 0
+            for i in range(0, len(adj_list)):
+                neighlist = list(adj_list[i + 1])
+                if len(neighlist) == 3:
+                    if probarr[i] == maxprob:
+                        randlist.append(i + 1)
+                        agent_position = random.choice(randlist)
+                        # print('test')
+                    elif probarr[i] > maxprob:
+                        maxprob = probarr[i]
+                        agent_position = i + 1
+
+            # print('Selection 2: New agent position using max probability and max neighbors:', agent_position)
+            turn = 3
+
+        if turn == 1:
+            for i in range(0, len(probarr)):
+                if probarr[i] == max(probarr):
+                    maxindices.append(i)
+            if len(maxindices) > 1:
+                rand2 = random.randint(0, len(maxindices) - 1)
+                agent_position = maxindices[rand2] + 1
+            elif len(maxindices) == 1:
+                agent_position = maxindices[0] + 1
+            # print('\nSelection 1: New agent position using max probability: ', agent_position)
+            turn = 2
+
+        # Steps increment
+        steps += 1
+
+    return steps
+
+
+def agent_6(target_position, agent_position, adj_list, observed_position):
+    # Note that one extra parameter is used here that isn't used elsewhere (so far)
+
+    # Creating probability array, initialized as 1/40 probability for each node
+    probarr = [1 / 40 for i in range(40)]
+    # Initialize steps counter
+    steps6 = 0
+
+    # Until agent finds the target:
+    while agent_position != target_position:
+
+        # First position has probability 0
+        probarr[observed_position - 1] = 0
+        # Adding up probabilities
+        sum = findsum(probarr, observed_position - 1)
+
+        # Changes probability
+        newprobarr = [0] * 40
+        for i in range(0, len(probarr)):
+            # If node is not agent's current observed node:
+            if i != observed_position - 1:
+                # New probability = old probability / sum
+                newprobarr[i] = probarr[i] / sum
+
+        for i in range(0, len(newprobarr)):
+            # Update all old probabilities to corresponding new probabilities
+            probarr[i] = newprobarr[i]
+
+        # Once agent has moved, probabilities will be recalculated
+        newprobarr2 = [0] * 40
+
+        # x1 and x2 represent two timestamps
+        # For each value of the array:
+        for x2 in range(0, len(probarr)):
+            # Set sum to 0 again before we recalculate
+            sum = 0
+            for x1 in range(0, len(probarr)):
+                if x1 != x2 or x1 != observed_position - 1:
+                    # Multiply probabilities of the neighbor ("and" in probability --> multiply)
+                    sum += probarr[x1] * findneighbors(adj_list, x2, x1)
+            newprobarr[x2] = sum
+
+        for i in range(0, len(newprobarr)):
+            # Update all old probabilities to corresponding new probabilities
+            probarr[i] = newprobarr[i]
+
+        # Highest probability
+        maxindices = []
+
+        for i in range(0, len(probarr)):
+            # Append maximum probability node to list
+            if probarr[i] == max(probarr):
+                maxindices.append(i)
+        # If there's multiple maximum probability nodes:
+        if len(maxindices) > 1:
+            # Choose from them at random to be examined
+            rand2 = random.randint(0, len(maxindices) - 1)
+            observed_position = maxindices[rand2] + 1
+        elif len(maxindices) == 1:
+            # Examine the maximum probability node
+            observed_position = maxindices[0] + 1
+
+        # print('Observed Position:', observed_position)
+        # print('Agent Position:', agent_position)
+
+        # A6 will now move towards observed_position:
+
+        # Create a list of all the agent's neighbors
+        listadj = list(adj_list[agent_position])
+        # print('listadj = ', listadj)
+
+        # Create a list of all distances from each neighbor to target
+        bfslens = []
+
+        # Traverse through neighbors
+        visited = set()
+        # print('visited is: ', visited)
+        prev2 = {agent_position: None}
+        # print('prev2 = ', prev2)
+        bfsagent = bfs(visited, adj_list, agent_position, observed_position,
+                       prev2)  # Travel towards examined node (highest-prob node), instead of traveling towards target_position
+        # print('bfsagent = ', bfsagent)
+        path2 = generatepath(bfsagent, agent_position, observed_position)
+        # print('path2 is:', path2)
+
+        for lists in listadj:
+            # Create a new visited array
+            visited = set()
+            # Call the BFS algorithm
+            prev = {lists: None}
+            bfslistend = bfs(visited, adj_list, lists, observed_position, prev)
+
+            # Generate the path from the hash table returned from bfslistend
+            path = generatepath(bfslistend, lists, observed_position)
+            # print('Printing Path:', path)
+            # Append (path length - 1) to BFS
+            if len(path) < len(path2):
+                # bfslens.append(len(path))
+                bfslens.append(path)
+        # rand2 = random.randint(0, len(bfslens) - 1)
+
+        # If bfslens is not empty, meaning there are multiple shortest paths,
+        if len(bfslens) > 0:
+            # Choose one of those randomly
+            rand2 = random.choice(bfslens)
+            # print('rand2 = ', rand2)
+            # print('bfslens = ', bfslens)
+
+            # Update agent_position to that index neighbor
+            # agent_position = bfslens[rand2]
+            agent_position = rand2[len(rand2) - 1]
+
+        # print('New Agent Position:', agent_position)
+
+        # Finding a random neighbor for target to jump to
+        # Target movement here
+        rand = random.randint(0, len(adj_list[target_position]) - 1)
+        listadj = list(adj_list[target_position])
+
+        # Target jumps to neighbor
+        target_position = listadj[rand]
+
+        # Steps increment
+        steps6 += 1
+        # print('Steps are:', steps6)
+        # print('Agent and Target position:%s %s'%(agent_position, target_position))
+
+        # If agent and target have come together,
+        if agent_position == target_position:
+            # print('Breaking here')
+            break
+
+    return steps6
+
+
+def agent_7(target_position, agent_position, adj_list, observed_position):
+    # Creating probability array, initialized as 1/40 probability for each node
+    probarr = [1 / 40 for i in range(40)]
+    # Initialize steps counter
+    steps6 = 0
+
+    # Until agent finds the target:
+    while agent_position != target_position:
+
+        # First position has probability 0
+        probarr[observed_position - 1] = 0
+        # Adding up probabilities
+        sum = findsum(probarr, observed_position - 1)
+
+        # Changes probability
+        newprobarr = [0] * 40
+        for i in range(0, len(probarr)):
+            # If node is not agent's current observed node:
+            if i != observed_position - 1:
+                # New probability = old probability / sum
+                newprobarr[i] = probarr[i] / sum
+
+        for i in range(0, len(newprobarr)):
+            # Update all old probabilities to corresponding new probabilities
+            probarr[i] = newprobarr[i]
+
+        # Once agent has moved, probabilities will be recalculated
+        newprobarr2 = [0] * 40
+
+        # x1 and x2 represent two timestamps
+        # For each value of the array:
+        for x2 in range(0, len(probarr)):
+            # Set sum to 0 again before we recalculate
+            sum = 0
+            for x1 in range(0, len(probarr)):
+                if x1 != x2 or x1 != observed_position - 1:
+                    # Multiply probabilities of the neighbor ("and" in probability --> multiply)
+                    sum += probarr[x1] * findneighbors(adj_list, x2, x1)
+            newprobarr[x2] = sum
+
+        for i in range(0, len(newprobarr)):
+            # Update all old probabilities to corresponding new probabilities
+            probarr[i] = newprobarr[i]
+
+        # Initialize randlist--used later to choose between ties in max probability
+        randlist = []
+        # initialize max probability as 0
+        maxprob = 0
+
+        # For each node,
+        for i in range(0, len(adj_list)):
+
+            # Save the neighbors of the node to a list
+            neighlist = list(adj_list[i + 1])
+            # If it has 3 neighbors:
+            if len(neighlist) == 3:
+                # print('3 neighbors list = ', neighlist)
+                # If multiple nodes have max probability:
+                if probarr[i] == maxprob:
+                    # Add them to the random list
+                    randlist.append(i + 1)
+                    # Examine a random one of them
+                    observed_position = random.choice(randlist)
+                # If probability is greater than current maximum,
+                elif probarr[i] > maxprob:
+                    # Update maximum
+                    maxprob = probarr[i]
+                    # Agent_position is now the node to be examined
+                    observed_position = i + 1
+
+        # print('Observed Position:', observed_position)
+        # print('Agent Position:', agent_position)
+
+        # Agent 7 will now move towards observed_position:
+
+        # Create a list of all the agent's neighbors
+        listadj = list(adj_list[agent_position])
+        # print('listadj = ', listadj)
+
+        # Create a list of all distances from each neighbor to target
+        bfslens = []
+
+        # Traverse through neighbors
+        visited = set()
+        # print('visited is: ', visited)
+        prev2 = {agent_position: None}
+        # print('prev2 = ', prev2)
+        bfsagent = bfs(visited, adj_list, agent_position, observed_position,
+                       prev2)  # Travel towards examined node (highest-prob node), instead of traveling towards target_position
+        # print('bfsagent = ', bfsagent)
+        path2 = generatepath(bfsagent, agent_position, observed_position)
+        # print('path2 is:', path2)
+
+        for lists in listadj:
+            # Create a new visited array
+            visited = set()
+            # Call the BFS algorithm
+            prev = {lists: None}
+            bfslistend = bfs(visited, adj_list, lists, observed_position, prev)
+
+            # Generate the path from the hash table returned from bfslistend
+            path = generatepath(bfslistend, lists, observed_position)
+            # print('Printing Path:', path)
+            # Append (path length - 1) to BFS
+            if len(path) < len(path2):
+                # bfslens.append(len(path))
+                bfslens.append(path)
+        # rand2 = random.randint(0, len(bfslens) - 1)
+
+        # If bfslens is not empty, meaning there are multiple shortest paths,
+        if len(bfslens) > 0:
+            # Choose one of them randomly
+            rand2 = random.choice(bfslens)
+            # print('rand2 = ', rand2)
+            # print('bfslens = ', bfslens)
+
+            # Update agent_position to that index neighbor
+            # agent_position = bfslens[rand2]
+            agent_position = rand2[len(rand2) - 1]
+
+        # print('New Agent Position:', agent_position)
+
+        # Finding a random neighbor for target to jump to
+        # Target movement here
+        rand = random.randint(0, len(adj_list[target_position]) - 1)
+        listadj = list(adj_list[target_position])
+
+        # Target jumps to neighbor
+        target_position = listadj[rand]
+
+        # Steps increment
+        steps6 += 1
+        # print('Steps are:', steps6)
+        # print('Agent and Target position:%s %s'%(agent_position, target_position))
+
+        # If agent and target have come together,
+        if agent_position == target_position:
+            # print('Breaking here')
+            break
+
+    return steps6
+
+# Creating the graph list with 40 nodes
+adj_list = {}
+adj_list[1] = set([2, 40])
+adj_list[2] = set([3, 1])
+adj_list[3] = set([4, 2])
+adj_list[4] = set([5, 3])
+adj_list[5] = set([6, 4])
+adj_list[6] = set([7, 5])
+adj_list[7] = set([8, 6])
+adj_list[8] = set([9, 7])
+adj_list[9] = set([10, 8])
+adj_list[10] = set([11, 9])
+adj_list[11] = set([12, 10])
+adj_list[12] = set([13, 11])
+adj_list[13] = set([14, 12])
+adj_list[14] = set([15, 13])
+adj_list[15] = set([16, 14])
+adj_list[16] = set([17, 15])
+adj_list[17] = set([18, 16])
+adj_list[18] = set([19, 17])
+adj_list[19] = set([20, 18])
+adj_list[20] = set([21, 19])
+adj_list[21] = set([22, 20])
+adj_list[22] = set([23, 21])
+adj_list[23] = set([24, 22])
+adj_list[24] = set([25, 23])
+adj_list[25] = set([26, 24])
+adj_list[26] = set([27, 25])
+adj_list[27] = set([28, 26])
+adj_list[28] = set([29, 27])
+adj_list[29] = set([30, 28])
+adj_list[30] = set([31, 29])
+adj_list[31] = set([32, 30])
+adj_list[32] = set([33, 31])
+adj_list[33] = set([34, 32])
+adj_list[34] = set([35, 33])
+adj_list[35] = set([36, 34])
+adj_list[36] = set([37, 35])
+adj_list[37] = set([38, 36])
+adj_list[38] = set([39, 37])
+adj_list[39] = set([40, 38])
+adj_list[40] = set([1, 39])
+i = 0
+# Adding ten 10 edges
+while i < 10:
+    rand1 = random.randint(1, 40)
+    rand2 = random.randint(1, 40)
+    # Make sure the two random numbers are distinct
+    while rand1 == rand2:
+        rand1 = random.randint(1, 40)
+        rand2 = random.randint(1, 40)
+    # Make sure the two random numbers aren't connected
+    while rand2 in adj_list[rand1] and rand1 in adj_list[rand2]:
+        rand1 = random.randint(1, 40)
+        rand2 = random.randint(1, 40)
+        while rand1 == rand2:
+            rand1 = random.randint(1, 40)
+            rand2 = random.randint(1, 40)
+    # No node has a degree more than 3
+    if len(adj_list[rand1]) < 3 and len(adj_list[rand2]) < 3:
+        # Adding an edge
+        adj_list[rand1].add(rand2)
+        adj_list[rand2].add(rand1)
+        i += 1
+target_position = random.randint(1, 40)
+agent_position = random.randint(1, 40)
+observed_position = random.randint(1, 40)
+print(agent_7(target_position, agent_position, adj_list, observed_position))
+print(6 + 8 + 105 + 7 + 38 + 160 + 193 + 137 + 142 + 252 + 362 + 186 + 360 + 243 + 199)
+print(2398/25)
