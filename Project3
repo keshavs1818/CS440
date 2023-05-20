@@ -1,0 +1,424 @@
+# Shahpur Khan, Keshav Subramanyam
+# Summer 440 - Intro to Artificial Intelligence
+# Project 3: The Meanest Sheep in the World Who Is Also Near Sighted
+
+# Imports
+# import matplotlib.pyplot as plt
+# from matplotlib import colors
+# import numpy as np
+
+import random
+
+GRID_SIZE = 7
+
+def showPlot(grid, gridsize):
+    ''' Display the plot containing whatever is contained in the passed data. '''
+    cmap = colors.ListedColormap(['white', 'black'])
+    # Using matplotlib's colors to create a list of color options for the squares of the field
+    colorbound = [0, 10, 20]
+    # A list of numbers that we'll use correspondingly with the above colors
+    norm = colors.BoundaryNorm(colorbound, cmap.N)
+    # BoundaryNorm allows us to link the colors in cmap with the numbers in colorbound (which will
+    # be used as boundaries). Every square in the field can thus be easily assigned an integer value
+    # to declare its color.
+
+    # Setting up the features of our grid -- size, gridlines, axes
+    fig, ax = plt.subplots()
+    fig.set_size_inches(7, 7)  # to enlarge grid image *** FEEL FREE TO ADJUST BASED ON YOUR MONITOR
+    ax.imshow(grid, cmap=cmap, norm=norm)
+
+    ax.grid(which='major', axis='both', linestyle='-', color='k', linewidth=2)  # gridlines
+    ax.set_xticklabels([])
+    ax.set_xticks(np.arange(-0.5, gridsize, 1));
+    ax.set_yticklabels([])
+    ax.set_yticks(np.arange(-0.5, gridsize, 1));
+
+    plt.show()
+
+
+def createField():
+    ''' Create a 51x51 square grid to represent the grazing field. '''
+
+    gridsize = 51  # choose how many rows and columns (same # of each) ---- ADJUST THIS TO TEST SMALLER/BIGGER FIELDS
+    grid = [[0] * gridsize] * gridsize  # data2 refers to the main data of the entire grid
+    data2row = len(grid)  # variable for number of rows in the "field grid"
+    data2col = len(grid[0])  # variable for number of columns in the "field grid"
+
+    # Declaring the center using floor division (good thing we have an odd-dimension grid)
+    center = (gridsize // 2, gridsize // 2)
+
+    # Declaring the cells that will make up the pen
+    pen = [(gridsize // 2, (gridsize // 2) + 1), (gridsize // 2 + 1, gridsize // 2 - 1),
+           (gridsize // 2, gridsize // 2 - 1), (gridsize // 2 + 1, gridsize // 2),
+           (gridsize // 2 - 1, gridsize // 2 - 1), (gridsize // 2 + 1, gridsize // 2 + 1),
+           (gridsize // 2 - 1, gridsize // 2 + 1), (gridsize // 2 + 1, gridsize // 2 + 1)]
+
+    for i in range(data2row):
+        choice = random.choices([5, 15], weights=[100, 0], k=gridsize)
+        # ^ choose a random color (indicating unblocked or blocked) for k squares per row
+        grid[i] = choice
+        # actually apply the color to the squares
+
+    for cell in pen:
+        grid[cell[0]][cell[1]] = 15
+
+    showPlot(grid, gridsize)
+
+    # return data2
+
+
+def moveSheep():
+    ''' Create the sheep that will run around the field created in createField. '''
+
+    pass
+
+
+# createField()
+
+def inbound(position):
+    return position >= 0 and position < GRID_SIZE
+
+
+# def sheep(sheep_position1, sheep_position2, bot_position1, bot_position2, graze_field):
+#     # The sheep occupies a random cell in the grid
+#     sheep_position1 = random.randint(0, 51)
+#     sheep_position2 = random.randint(0, 51)
+#
+#     # The robot occupies a random cell in the grid
+#     bot_position1 = random.randint(0, 51)
+#     bot_position2 = random.randint(0, 51)
+#
+#     # Suppose sheep is already at the bot, the program ends
+#     if (sheep_position1, sheep_position2) == (bot_position1, bot_position2):
+#         return False
+#
+#     # Center
+#     center = sheep_position1 == 25 and sheep_position2 == 25
+#
+#     # While the sheep isn't at center,
+#     while not center:
+#         if not (inbound(sheep_position1) and inbound(sheep_position2)):
+#             return False
+#         print(sheep_position1)
+#         print(sheep_position2)
+#         # Creates a field of view at every sheep position (x1, x2).
+#         # Field of View Represents:
+#         # (x1 - 2, x2 + 2), (x1 - 1, x2 + 2), (x1, x2 + 2), (x1 + 1, x2 + 2), (x1 + 2, x2 + 2)
+#         # (x1 - 2, x2 + 1), (x1 - 1, x2 + 1), (x1, x2 + 1), (x1 + 1, x2 + 1), (x1 + 2, x2 + 1)
+#         # (x1 - 2, x2), (x1 - 1, x2), <<<<SHEEP'S>>>>(x1, x2)<<<<POSITION>>>>, (x1 + 1, x2), (x1 + 2, x2)
+#         # (x1 - 2, x2 - 1), (x1 - 1, x2 - 1), (x1, x2 - 1), (x1 + 1, x2 - 1), (x1 + 2, x2 - 1)
+#         # (x1 - 2, x2 - 2), (x1 - 1, x2 - 2), (x1, x2 - 2), (x1 + 1, x2 - 2), (x1 + 2, x2 - 2)
+#         fieldofview = []
+#         end = sheep_position2 + 2
+#         while end > sheep_position2 - 3:
+#             for i in range(sheep_position1 - 2, sheep_position1 + 3):
+#                 fieldofview.append((i, end))
+#             end -= 1
+#
+#         # Seeing if robot is in field of view, this will determine the sheep's action
+#         botfield = False
+#         for i in range(0, len(fieldofview)):
+#             if (bot_position1, bot_position2) == fieldofview[i]:
+#                 botfield = True
+#
+#         # If robot isn't in the field of view,
+#         if not botfield:
+#             sheep_directions = [(0, 0), (0, 1), (1, 0), (-1, 0), (0, -1)]
+#             validmoves = []
+#
+#             # Lists all the valid moves that the sheep can make (a valid move is a move that will not permit the sheep
+#             # to go out of bounds or to go into a blocked cell
+#             for d in sheep_directions:
+#                 indexinbound = inbound(sheep_position1 + d[0]) and inbound(sheep_position2 + d[1])
+#                 if indexinbound:
+#                     if graze_field[sheep_position1 + d[0]][sheep_position2 + d[1]] == 0:
+#                         validmoves.append((d[0], d[1]))
+#             # print(validmoves)
+#             # Picks a valid move at random and changes
+#             rand1 = random.randint(0, len(validmoves) - 1)
+#             sheep_position1 += validmoves[rand1][0]
+#             sheep_position2 += validmoves[rand1][1]
+#         # If robot is in the field of view,
+#         else:
+#             # Finding moves that bring us closer to the target
+#             validmoves = []
+#             # If the x axis difference is negative, append (-1, 0)
+#             if bot_position1 - sheep_position1 < 0:
+#                 validmoves.append((-1, 0))
+#             # Else if x axis difference is positive, append (1, 0)
+#             elif bot_position1 - sheep_position1 > 0:
+#                 validmoves.append((1, 0))
+#
+#             # If the y axis difference is negative, append (0, -1)
+#             if bot_position2 - sheep_position2 < 0:
+#                 validmoves.append((0, -1))
+#             # Else if the y axis difference is positive, append (0, 1)
+#             elif bot_position2 - sheep_position2 > 0:
+#                 validmoves.append((0, 1))
+#
+#             # Pick a random element out of validmoves
+#             rand2 = random.randint(0, len(validmoves) - 1)
+#
+#             # Increment sheep position with those numbers
+#             sheep_position1 += validmoves[rand2][0]
+#             sheep_position2 += validmoves[rand2][1]
+#
+#             # One more check, if sheep is at robot position, it returns false
+#             if sheep_position1 == bot_position1 and sheep_position2 == bot_position2:
+#                 return False
+#
+#         # Bot has 8 neighbors. Finds all valid neighbors and picks one valid at random
+#         botdirections = [(0, 0), (0, 1), (-1, 0), (1, 0), (0, -1), (-1, -1), (1, 1), (-1, 1), (1, -1)]
+#         botmoves = []
+#         for d in botdirections:
+#             indexinbound = inbound(bot_position1 + d[0]) and inbound(bot_position2 + d[1])
+#             if indexinbound and graze_field[bot_position1 + d[0]][bot_position2 + d[1]]:
+#                 validmoves.append((d[0], d[1]))
+#         rand3 = random.randint(0, len(validmoves) - 1)
+#         bot_position1 += validmoves[rand3][0]
+#         bot_position2 += validmoves[rand3][1]
+#
+#         # Last and final check whether sheep is at bot
+#         if sheep_position1 == bot_position1 and sheep_position2 == bot_position2:
+#             return False
+#     print("LEFT")
+#     # Given that the sheep never reaches the bot and eventually hits the center, return true
+#     return True
+
+
+def setsheep(bv, sheep1, sheep2, sheepdirections):
+    # Creating the field of view
+    fieldofview = []
+    end = sheep2 + 2
+    while end > sheep2 - 3:
+        for i in range(sheep1 - 2, sheep1 + 3):
+            fieldofview.append((i, end))
+        end -= 1
+    # Seeing if robot is in field of view, this will determine the sheep's action
+    botfield = bv in fieldofview
+    sheepdvalid = []
+    # If the bot isn't in field of view,
+    if not botfield:
+        # Add all the valid moves the sheep can take
+        for sd in sheepdirections:
+            if inbound(sheep1 + sd[0]) and inbound(sheep2 + sd[1]):
+                if graze_field[sheep1 + sd[0]][sheep2 + sd[1]] != 1:
+                    sheepdvalid.append((sheep1 + sd[0], sheep2 + sd[1]))
+    else:
+        # Add all the valid moves that get the sheep closer to the robot
+        if bv[0] < sheep1:
+            if graze_field[sheep1 - 1][sheep2] != 1:
+                sheepdvalid.append((sheep1 - 1, sheep2))
+        if bv[1] < sheep2:
+            if graze_field[sheep1][sheep2 - 1] != 1:
+                sheepdvalid.append((sheep1, sheep2 - 1))
+        if bv[0] > sheep1:
+            if graze_field[sheep1 + 1][sheep2] != 1:
+                sheepdvalid.append((sheep1 + 1, sheep2))
+        if bv[1] > sheep2:
+            if graze_field[sheep1][sheep2 + 1] != 1:
+                sheepdvalid.append((sheep1, sheep2 + 1))
+        if len(sheepdvalid) == 0:
+            sheepdvalid.append((sheep1, sheep2))
+    return sheepdvalid
+
+
+def bellman(bot1, bot2, sheep1, sheep2, oldhash, graze_field):
+    botdirections = [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, 1), (-1, -1), (1, -1)]
+    sheepdirections = [(0, 0), (1, 0), (-1, 0), (0, -1), (0, 1)]
+    botdvalid = []
+    # print((bot1, bot2))
+    # print((sheep1, sheep2))
+
+    # Add of the valid bot movements
+    for bd in botdirections:
+        if inbound(bot1 + bd[0]) and inbound(bot2 + bd[1]):
+            if graze_field[bot1 + bd[0]][bot2 + bd[1]] != 1:
+                botdvalid.append((bot1 + bd[0], bot2 + bd[1]))
+    actionutility = []
+    # print("BOT: " + str((bot1, bot2)))
+    # For each possible action
+    # print((bot1, bot2, sheep1, sheep2))
+    # print(botdvalid)
+    for bv in botdvalid:
+        # Create the sheep movements based on the bot action made
+        sheepd = setsheep(bv, sheep1, sheep2, sheepdirections)
+        utilsum = 0
+        for s in sheepd:
+            # if graze_field[bv[0]][bv[1]] == 1 or graze_field[s[0]][s[1]] == 1:
+            #     continue
+            # elif bv == s:
+            #     continue
+            # elif bv == s:
+            #     continue
+            # elif s == (3, 3):
+            #     continue
+            # elif s == (2, 3):
+            #     if bv == (3, 1) or bv == (3, 5) or bv == (4, 1) or bv == (4, 5):
+            #         continue
+            # else:
+            utilsum += oldhash[(bv[0], bv[1], s[0], s[1])]
+            # print((bv[0], bv[1], s[0], s[1]))
+            # print(oldhash[(bv[0], bv[1], s[0], s[1])] == float("inf"))
+        # Find the action utilities given state
+        actionutility.append(1 + 0.99 * (utilsum / len(sheepd)))
+    # print(actionutility)
+    # print(min(actionutility))
+    return min(actionutility)
+
+
+def populateandupdate(oldutilitystates, newutilitystates, graze_field):
+    # Initially set all utility states to 0
+
+    for botx in range(0, GRID_SIZE):
+        for boty in range(0, GRID_SIZE):
+            for sheepx in range(0, GRID_SIZE):
+                for sheepy in range(0, GRID_SIZE):
+                    if graze_field[botx][boty] != 1 and graze_field[sheepx][sheepy] != 1:
+                        statetuple = (botx, boty, sheepx, sheepy)
+                        oldutilitystates[statetuple] = 0
+    # stop = False
+    count = 0
+    newdiff = 0
+    stop = False
+    count = 0
+    while not stop:
+        # print(oldutilitystates)
+        for botx in range(0, GRID_SIZE):
+            for boty in range(0, GRID_SIZE):
+                for sheepx in range(0, GRID_SIZE):
+                    for sheepy in range(0, GRID_SIZE):
+                        center = sheepx == int(GRID_SIZE/2) and sheepy == int(GRID_SIZE/2)
+                        if graze_field[botx][boty] == 1 or graze_field[sheepx][sheepy] == 1:
+                            continue
+                        elif (botx, boty) == (sheepx, sheepy):
+                            newutilitystates[(botx, boty, sheepx, sheepy)] = float("inf")
+                        elif center:
+                            newutilitystates[(botx, boty, sheepx, sheepy)] = 0
+                        else:
+                            newutilitystates[(botx, boty, sheepx, sheepy)] = bellman(botx, boty, sheepx, sheepy,
+                                                                                 oldutilitystates, graze_field)
+        # print(newutilitystates)
+        diff = 0
+        diffsum = 0
+        for key in newutilitystates:
+           # diffsum += abs(oldutilitystates[key] - newutilitystates[key])
+           if newutilitystates[key] != oldutilitystates[key]:
+               diff += 1
+        # print("DIFF: " + str(diff))
+        # print("DIFFSUM: " + str(diffsum))
+        if diff == 0:
+           stop = True
+        else:
+            for key in oldutilitystates:
+               oldutilitystates[key] = newutilitystates[key]
+    count += 1
+
+
+def sheepdogbot1(sheep_position1, sheep_position2, bot_position1, bot_position2, graze_field):
+    # Populating all of the utility values
+    oldutilitystates = {}
+    newutilitystates = {}
+    populateandupdate(oldutilitystates, newutilitystates, graze_field)
+    # print(oldutilitystates)
+    with open("T-States_AI_project_3", "w") as f:
+        #print(oldutilitystates, file=f)
+        for key in oldutilitystates:
+            print(str(key) + ' : ' + str(oldutilitystates[key]), file=f)
+
+    center = sheep_position1 == GRID_SIZE // 2 and sheep_position2 == GRID_SIZE // 2
+    botsheep = (bot_position1, bot_position2) == (sheep_position1, sheep_position2)
+
+    # while sheep isn't at center and bot isn't at sheep
+    while center == False and botsheep == False:
+        botdirections = [(0, 1), (0, 0), (1, 0), (-1, 0), (0, -1), (-1, 1), (1, -1), (-1, -1), (1, 1)]
+        sheepdirections = [(0, 0), (0, 1), (1, 0), (-1, 0), (0, -1)]
+        botdvalid = []
+        # print("BOT: " + str((bot_position1, bot_position2)))
+        # print("SHEEP: " + str((sheep_position1, sheep_position2)))
+        # Find all the valid bots
+        for bd in botdirections:
+            if inbound(bot_position1 + bd[0]) and inbound(bot_position2 + bd[1]):
+                if graze_field[bot_position1 + bd[0]][bot_position2 + bd[1]] != 1:
+                    botdvalid.append((bot_position1 + bd[0], bot_position2 + bd[1]))
+        # print("BOT VALID: " + str(botdvalid))
+        newbotdvalid = []
+        for bv in botdvalid:
+            sheepdvalid = setsheep(bv, sheep_position1, sheep_position2, sheepdirections)
+            infbool = False
+            for s in sheepdvalid:
+                if oldutilitystates[(bv[0], bv[1], s[0], s[1])] == float("inf"):
+                    infbool = True
+            if not infbool:
+                newbotdvalid.append(bv)
+        # print(newbotdvalid)
+        utilityneighbors = []
+        for i in range(0, len(newbotdvalid)):
+            utilityneighbors.append(oldutilitystates[(newbotdvalid[i][0], newbotdvalid[i][1], sheep_position1, sheep_position2)])
+        for i in range(0, len(utilityneighbors)):
+            if utilityneighbors[i] == min(utilityneighbors):
+                bot_position1 = newbotdvalid[i][0]
+                bot_position2 = newbotdvalid[i][1]
+                break
+        # print("New bot: " + str((bot_position1, bot_position2)))
+        sheepmovesvalid = setsheep((bot_position1, bot_position2), sheep_position1, sheep_position2, sheepdirections)
+        rand = random.randint(0, len(sheepmovesvalid) - 1)
+        sheep_position1 = sheepmovesvalid[rand][0]
+        sheep_position2 = sheepmovesvalid[rand][1]
+        # bot_position1 = sheep_position1
+        # bot_position2 = sheep_position2
+        # print("SHEEP HAS CHANGED: " + str((sheep_position1, sheep_position2)))
+        if (bot_position1, bot_position2) == (sheep_position1, sheep_position2):
+            botsheep = True
+        if sheep_position1 == GRID_SIZE//2 and sheep_position2 == GRID_SIZE//2:
+            center = True
+
+    print("FINAL: " + str(oldutilitystates[(bot_position1, bot_position2, sheep_position1, sheep_position2)]))
+
+    # If sheep reaches center, return true, otherwise it returns false
+    if center:
+        return True
+    if botsheep:
+        return False
+
+
+# Creates the grazing field
+graze_field = [[0] * GRID_SIZE] * GRID_SIZE
+
+# U is the pen, the pen is blocked. 1 means blocked.
+pen1 = GRID_SIZE // 2 - 1
+pen2 = GRID_SIZE // 2
+pen3 = GRID_SIZE // 2 + 1
+pen = [( pen1, pen1), (pen1, pen3), (pen2, pen1), (pen2, pen3), (pen3, pen1), (pen3, pen2), (pen3, pen3)]
+for i in range(len(graze_field)):
+    # Designating the cells that will not be part of the pen
+    choice = random.choices([0, 1], weights=[100, 0], k=GRID_SIZE)
+    graze_field[i] = choice
+for cell in pen:
+    # Designating the cells that will be part of the pen
+    graze_field[cell[0]][cell[1]] = 1
+
+randomsheep = []
+randombot = []
+
+for s1 in range(0, GRID_SIZE):
+    for s2 in range(0, GRID_SIZE):
+        for b1 in range(0, GRID_SIZE):
+            for b2 in range(0, GRID_SIZE):
+                if (s1, s2) not in pen:
+                    randomsheep.append((s1, s2))
+                if (b1, b2) not in pen:
+                    randombot.append((b1, b2))
+
+sheepriterator = random.randint(0, len(randomsheep) - 1)
+botriterator = random.randint(0, len(randombot) - 1)
+
+# The sheep occupies a random cell in the grid
+sheep_position1 = randomsheep[sheepriterator][0]
+sheep_position2 = randomsheep[sheepriterator][1]
+
+# The robot occupies a random cell in the grid
+bot_position1 = randombot[botriterator][0]
+bot_position2 = randombot[botriterator][1]
+
+print(sheepdogbot1(sheep_position1, sheep_position2, bot_position1, bot_position2, graze_field))
